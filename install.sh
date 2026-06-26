@@ -58,9 +58,6 @@ mkdir -p "$INSTALL_DIR"
 cp "$SCRIPT_DIR/$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
 chmod 644 "$INSTALL_DIR/$SCRIPT_NAME"
 
-# Atualiza o DEVICE no script instalado para o detectado
-sed -i "s|^DEVICE\s*=.*|DEVICE = \"$DEVICE\"|" "$INSTALL_DIR/$SCRIPT_NAME"
-
 info "Script instalado em $INSTALL_DIR/$SCRIPT_NAME"
 
 # ── udev rule ─────────────────────────────────────────────────────────────────

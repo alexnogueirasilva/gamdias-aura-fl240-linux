@@ -14,7 +14,8 @@ import os, fcntl, array, time, glob, logging, signal, sys
 from pathlib import Path
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DEVICE          = "/dev/hidraw3"
+VENDOR_ID       = "1b80"
+PRODUCT_ID      = "b533"
 INTERVAL        = 2.0       # seconds between updates
 FAN_MAX_RPM     = 1800      # used to compute fan ring %
 PUMP_MAX_RPM    = 2300      # used to compute pump ring %
@@ -154,18 +155,32 @@ def _stop(sig, frame):
     log.info("Sinal %s recebido, encerrando…", sig)
     _running = False
 
+def find_device() -> str | None:
+    """Find hidraw device by vendor/product ID, regardless of kernel-assigned number."""
+    target = f"HID_ID=0003:{VENDOR_ID.upper().zfill(8)}:{PRODUCT_ID.upper().zfill(8)}"
+    for hidraw in glob.glob("/sys/class/hidraw/hidraw*/device/"):
+        try:
+            text = (Path(hidraw) / "uevent").read_text()
+        except Exception:
+            continue
+        if target in text:
+            return f"/dev/{Path(hidraw).parent.name}"
+    return None
+
 def open_device() -> int | None:
+    device = find_device()
+    if device is None:
+        log.debug("Dispositivo %s:%s não encontrado.", VENDOR_ID, PRODUCT_ID)
+        return None
     try:
-        fd = os.open(DEVICE, os.O_RDWR)
-        log.info("Dispositivo aberto: %s", DEVICE)
+        fd = os.open(device, os.O_RDWR)
+        log.info("Dispositivo aberto: %s", device)
         return fd
     except PermissionError:
-        log.error("Sem permissão para %s. Adicione ao grupo 'input' ou execute como root.", DEVICE)
-        return None
-    except FileNotFoundError:
+        log.error("Sem permissão para %s. Adicione ao grupo 'input' ou execute como root.", device)
         return None
     except OSError as e:
-        log.debug("Não foi possível abrir %s: %s", DEVICE, e)
+        log.debug("Não foi possível abrir %s: %s", device, e)
         return None
 
 def init_device(fd: int):

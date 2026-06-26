@@ -51,7 +51,8 @@ Edit `/usr/local/lib/gamdias/gamdias_display.py` to adjust:
 
 | Variable | Default | Description |
 |---|---|---|
-| `DEVICE` | `/dev/hidraw3` | HID device path (auto-set by installer) |
+| `VENDOR_ID` | `1b80` | USB Vendor ID of the cooler |
+| `PRODUCT_ID` | `b533` | USB Product ID of the cooler |
 | `INTERVAL` | `2.0` | Seconds between display updates |
 | `FAN_MAX_RPM` | `1800` | Max fan RPM for ring gauge scaling |
 | `PUMP_MAX_RPM` | `2300` | Max pump RPM for ring gauge scaling |
@@ -87,6 +88,37 @@ The cooler communicates via **HID Feature Reports** (9-byte packets over `ioctl`
 Sensor data is read from the Linux `hwmon` subsystem:
 - CPU temp: `k10temp` or `coretemp` driver
 - Fan / pump RPM: `it8689` SuperIO chip (`IT8689E` found on B550M AORUS ELITE and similar boards)
+
+## Troubleshooting
+
+### Display stopped working after reboot
+
+**Symptom:** service is running but the display is blank or frozen.
+
+**Cause:** Linux assigns `/dev/hidrawN` numbers dynamically at boot. If you have multiple USB HID devices (keyboards, mice, receivers), the cooler may land on a different number each time — e.g. `hidraw3` one boot, `hidraw8` the next.
+
+**Why this is not a problem anymore:** the script no longer hardcodes the device path. On every connection attempt it scans `/sys/class/hidraw/hidraw*/device/uevent` and matches the entry that contains:
+
+```
+HID_ID=0003:00001B80:0000B533
+```
+
+That ID is tied to the hardware (USB Vendor `1b80` / Product `b533`) and never changes, regardless of which `hidrawN` the kernel assigns.
+
+If you see `Dispositivo 1b80:b533 não encontrado` in the logs, check that:
+1. The cooler USB cable is plugged in
+2. The udev rule exists: `cat /etc/udev/rules.d/99-gamdias.rules`
+3. Your user is in the `input` group: `groups $USER`
+
+### Permission denied on /dev/hidrawN
+
+The udev rule must match the correct Vendor/Product IDs. Verify with:
+
+```bash
+udevadm info /dev/$(ls /sys/class/hidraw/ | head -1) | grep -E "ID_VENDOR_ID|ID_MODEL_ID"
+```
+
+Then check `/etc/udev/rules.d/99-gamdias.rules` contains `idVendor=="1b80"` and `idProduct=="b533"`.
 
 ## Compatibility
 
