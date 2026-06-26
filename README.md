@@ -4,7 +4,8 @@ A reverse-engineered Linux controller for the **Gamdias Aura FL240 (CHIONE STN)*
 
 Displays real-time CPU temperature, fan RPM, and pump RPM on the built-in LCD — no Windows required.
 
-![Display showing CPU temp and RPM rings](https://raw.githubusercontent.com/alexnogueirasilva/gamdias-aura-fl240-linux/main/assets/display.png)
+![Display showing CPU temp and RPM rings](https://raw.githubusercontent.com/alexnogueirasilva/gamdias-aura-fl240-linux/main/assets/display-1.jpg)
+![Display alternate view](https://raw.githubusercontent.com/alexnogueirasilva/gamdias-aura-fl240-linux/main/assets/display-2.jpg)
 
 ## Features
 
